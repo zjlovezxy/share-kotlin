@@ -15,7 +15,7 @@ class CommentAdapter : ListAdapter<Comment, CommentAdapter.ViewHolder>(DIFF) {
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) = holder.bind(getItem(position))
 
-    class ViewHolder(private val binding: ItemCommentBinding) : RecyclerView.ViewHolder(binding.root) {
+    open class ViewHolder(private val binding: ItemCommentBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(comment: Comment) {
             with(binding) {
                 avatar.loadUrl(comment.user.avatarUrl)

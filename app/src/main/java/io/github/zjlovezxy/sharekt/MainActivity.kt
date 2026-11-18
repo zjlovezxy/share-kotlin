@@ -8,6 +8,7 @@ import androidx.core.view.isVisible
 import androidx.navigation.NavController
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import io.github.zjlovezxy.sharekt.core.auth.LoginActivity
 import io.github.zjlovezxy.sharekt.core.ui.Navigator

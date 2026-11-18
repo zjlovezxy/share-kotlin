@@ -29,9 +29,9 @@ kotlin {
 
 dependencies {
     implementation(project(":core:common"))
-    implementation(project(":core:model"))
-    implementation(libs.okhttp)
-    implementation(libs.kotlinx.serialization.json)
+    api(project(":core:model"))
+    api(libs.okhttp)
+    api(libs.kotlinx.serialization.json)
     testImplementation(libs.junit)
     implementation(libs.kotlinx.coroutines.android)
 }

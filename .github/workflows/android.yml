@@ -51,14 +51,19 @@ jobs:
         shell: bash
         run: set -o pipefail; ./gradlew :app:assembleDebug --stacktrace 2>&1 | tee -a ci.log
 
-      # 打 tag 时把 debug 包也放进 release：没有签名 secrets 也能直接装
+      # 打 tag 或仓库根有 release-tag.txt 时，把 debug 包整理成可直接安装的产物
+      # （用文件而不是 tag，是因为本机没有 PAT，推不了 tag）
       - name: Prepare distributable debug apk
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || hashFiles('release-tag.txt') != ''
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk "dist/ShareKt-${GITHUB_REF_NAME}-debug.apk"
+          TAG="$(tr -d '[:space:]' < release-tag.txt 2>/dev/null || true)"
+          if [ -z "$TAG" ]; then TAG="${GITHUB_REF_NAME}"; fi
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          cp app/build/outputs/apk/debug/app-debug.apk "dist/ShareKt-${TAG}-debug.apk"
+          ls -l dist
 
       - uses: actions/upload-artifact@v4
         with:
@@ -82,16 +87,21 @@ jobs:
             -Pandroid.injected.signing.key.password="$KEY_PASSWORD" \
             2>&1 | tee -a ci.log
 
-      - name: Upload release to GitHub Releases
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          # 没有签名 secrets 时 release apk 不存在，只发 debug 包，不让整步失败
-          fail_on_unmatched_files: false
-          generate_release_notes: true
-          files: |
-            app/build/outputs/apk/release/*.apk
-            dist/*.apk
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v') || hashFiles('release-tag.txt') != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(dist/*.apk app/build/outputs/apk/release/*.apk)
+          echo "发布 ${TAG}：${files[*]}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "${files[@]}" --clobber
+          else
+            gh release create "$TAG" "${files[@]}" --title "ShareKt $TAG" --target "$GITHUB_SHA" --generate-notes
+          fi
 
       # 失败时把日志尾巴贴进 issue，便于在无 token 环境排查
       - name: Report failure to issue

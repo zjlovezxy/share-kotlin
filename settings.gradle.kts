@@ -7,6 +7,11 @@ pluginManagement {
                 includeGroupByRegex("androidx.*")
             }
         }
+        // repo.maven.apache.org 在 GitHub runner 上偶发全量 404，加一个 Google 托管的
+        // Maven Central 镜像作为兜底（内容完全相同）
+        maven("https://maven-central.storage-download.googleapis.com/maven2/") {
+            name = "centralMirror"
+        }
         mavenCentral()
         gradlePluginPortal()
     }
@@ -16,6 +21,9 @@ dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
+        maven("https://maven-central.storage-download.googleapis.com/maven2/") {
+            name = "centralMirror"
+        }
         mavenCentral()
     }
 }

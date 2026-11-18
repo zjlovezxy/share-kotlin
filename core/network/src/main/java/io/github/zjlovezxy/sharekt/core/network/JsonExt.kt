@@ -3,6 +3,9 @@ package io.github.zjlovezxy.sharekt.core.network
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.longOrNull
 
 /**
  * mapi 的数值字段有时是数字、有时是字符串（"12" / 12），

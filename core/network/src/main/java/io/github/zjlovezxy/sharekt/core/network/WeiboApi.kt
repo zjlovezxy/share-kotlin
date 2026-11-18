@@ -7,6 +7,8 @@ import io.github.zjlovezxy.sharekt.core.model.Status
 import io.github.zjlovezxy.sharekt.core.model.WeiboUser
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.intOrNull
 
 /** mapi 的业务语义层：把 JSON 变成 Page&lt;Status&gt; / Page&lt;Comment&gt;，并统一错误。 */
 class WeiboApi(private val client: MapiClient) {
@@ -102,12 +104,17 @@ class WeiboApi(private val client: MapiClient) {
         return obj.int("message")
     }
 
-    private fun params(sinceId: String, maxId: String, count: Int, page: Int) = buildMap {
+    private fun params(
+        sinceId: String,
+        maxId: String,
+        count: Int,
+        page: Int,
+    ): Map<String, String> = buildMap {
         if (sinceId.isNotEmpty()) put(ApiConfig.PARAM_CURSOR, sinceId)
         put("max_id", maxId)
         put(ApiConfig.PARAM_PAGE_SIZE, count.toString())
         put("page", page.toString())
-        put("is_showbulk" to "1")
+        put("is_showbulk", "1")
     }
 
     private fun pageOf(obj: JsonObject, count: Int): Page<Status> {

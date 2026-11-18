@@ -21,9 +21,9 @@ class MapiException(
 fun Throwable.userMessage(): String = when (this) {
     is MapiException -> when {
         needLogin -> "登录已失效，请重新登录"
-        code == CODE_NETWORK -> "网络不可用，请检查连接"
-        code == CODE_PARSE -> "数据解析失败，稍后重试"
-        else -> message.ifBlank { "请求失败（$code）" }
+        code == MapiException.CODE_NETWORK -> "网络不可用，请检查连接"
+        code == MapiException.CODE_PARSE -> "数据解析失败，稍后重试"
+        else -> message.orEmpty().ifBlank { "请求失败（$code）" }
     }
-    else -> message.ifBlank { "请求失败" }
+    else -> message.orEmpty().ifBlank { "请求失败" }
 }

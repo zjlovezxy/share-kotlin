@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -31,6 +32,6 @@ dependencies {
     implementation(project(":core:model"))
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)
-    testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.junit)
+    implementation(libs.kotlinx.coroutines.android)
 }

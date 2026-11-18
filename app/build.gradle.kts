@@ -47,6 +47,22 @@ kotlin {
 dependencies {
     implementation(project(":core:ui"))
     implementation(project(":core:common"))
+    implementation(project(":core:model"))
+    implementation(project(":core:network"))
+    implementation(project(":core:data"))
+    implementation(project(":core:auth"))
+
+    implementation(project(":feature:timeline"))
+    implementation(project(":feature:detail"))
+    implementation(project(":feature:search"))
+    implementation(project(":feature:profile"))
+    implementation(project(":feature:settings"))
+    implementation(project(":feature:message"))
+    implementation(project(":feature:notification"))
+    implementation(project(":feature:publish"))
+
+    implementation(libs.coil)
+    implementation(libs.coil.network.okhttp)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

@@ -3,7 +3,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.ksp)
 }
 
 android {
@@ -29,11 +28,9 @@ kotlin {
 
 dependencies {
     implementation(project(":core:common"))
-    implementation(project(":core:model"))
-    implementation(project(":core:network"))
-    implementation(libs.androidx.paging.runtime)
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    ksp(libs.androidx.room.compiler)
+    api(project(":core:model"))
+    api(project(":core:network"))
     testImplementation(libs.junit)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.serialization.json)
 }

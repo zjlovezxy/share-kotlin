@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/timelineFragment">
+
+    <fragment
+        android:id="@+id/timelineFragment"
+        android:name="io.github.zjlovezxy.sharekt.feature.timeline.TimelineFragment"
+        android:label="首页" />
+
+    <fragment
+        android:id="@+id/searchFragment"
+        android:name="io.github.zjlovezxy.sharekt.feature.search.SearchFragment"
+        android:label="搜索" />
+
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="io.github.zjlovezxy.sharekt.feature.profile.ProfileFragment"
+        android:label="我的" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="io.github.zjlovezxy.sharekt.feature.settings.SettingsFragment"
+        android:label="设置" />
+
+    <fragment
+        android:id="@+id/detailFragment"
+        android:name="io.github.zjlovezxy.sharekt.feature.detail.DetailFragment"
+        android:label="详情">
+        <argument
+            android:name="statusId"
+            android:defaultValue=""
+            app:argType="string" />
+    </fragment>
+</navigation>

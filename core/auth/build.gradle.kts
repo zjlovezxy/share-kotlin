@@ -28,10 +28,12 @@ kotlin {
 
 dependencies {
     implementation(project(":core:common"))
+    api(project(":core:network"))
     implementation(libs.androidx.appcompat)
     testImplementation(libs.junit)
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
 }

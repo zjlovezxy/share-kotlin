@@ -107,7 +107,9 @@ jobs:
             const wrongAt = lines.findIndex(l => l.includes('What went wrong'));
             const headAt = wrongAt >= 0 ? wrongAt : Math.max(0, lines.length - 400);
             const head = lines.slice(headAt, headAt + 90).join('\n').slice(-40000);
-            const tail = lines.slice(-60).join('\n').slice(-20000);
+            // Kotlin/Gradle 的具体报错行（e: file:line:col ...）往往不在根因块里
+            const errs = lines.filter(l => /^(e: |w: .*error|> Task .*FAILED|FAILURE: Build failed)/.test(l)).slice(0, 60).join('\n').slice(-20000);
+            const tail = lines.slice(-40).join('\n').slice(-12000);
             const TITLE = 'CI 失败日志（自动汇总）';
             const { owner, repo } = context.repo;
             const open = await github.rest.issues.listForRepo({ owner, repo, state: 'open', per_page: 100 });
@@ -132,7 +134,14 @@ jobs:
               '```',
               '</details>',
               '',
-              '<details><summary>最后 60 行</summary>',
+              '<details open><summary>编译错误行</summary>',
+              '',
+              '```',
+              errs || '(无 e: 行)',
+              '```',
+              '</details>',
+              '',
+              '<details><summary>最后 40 行</summary>',
               '',
               '```',
               tail,

@@ -14,6 +14,10 @@ android {
         consumerProguardFiles("consumer-rules.pro")
     }
 
+    buildFeatures {
+        viewBinding = true
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -28,8 +32,23 @@ kotlin {
 
 dependencies {
     implementation(project(":core:common"))
+    implementation(project(":core:model"))
+    implementation(project(":core:network"))
     implementation(project(":core:ui"))
+    implementation(project(":core:data"))
+    implementation(project(":core:auth"))
+
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.google.material)
+    implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.androidx.navigation.fragment)
+    implementation(libs.kotlinx.coroutines.android)
+
     testImplementation(libs.junit)
 }

@@ -102,7 +102,12 @@ jobs:
             const fs = require('fs');
             let log = '';
             try { log = fs.readFileSync('ci.log', 'utf8'); } catch (e) { log = '(ci.log 未生成)'; }
-            const tail = log.trimEnd().split('\n').slice(-120).join('\n').slice(-60000);
+            const lines = log.split('\n');
+            // 第一个 "What went wrong" 才是真正的根因，tail 里往往只剩 stacktrace
+            const wrongAt = lines.findIndex(l => l.includes('What went wrong'));
+            const headAt = wrongAt >= 0 ? wrongAt : Math.max(0, lines.length - 400);
+            const head = lines.slice(headAt, headAt + 90).join('\n').slice(-40000);
+            const tail = lines.slice(-60).join('\n').slice(-20000);
             const TITLE = 'CI 失败日志（自动汇总）';
             const { owner, repo } = context.repo;
             const open = await github.rest.issues.listForRepo({ owner, repo, state: 'open', per_page: 100 });
@@ -120,7 +125,14 @@ jobs:
               `- ref: \`${context.ref}\``,
               `- sha: \`${context.sha.slice(0, 7)}\``,
               '',
-              '<details><summary>最后 120 行</summary>',
+              '<details open><summary>根因（What went wrong）</summary>',
+              '',
+              '```',
+              head,
+              '```',
+              '</details>',
+              '',
+              '<details><summary>最后 60 行</summary>',
               '',
               '```',
               tail,

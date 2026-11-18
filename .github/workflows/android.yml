@@ -13,6 +13,7 @@ concurrency:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   build:
@@ -30,11 +31,14 @@ jobs:
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
+      # 全程 tee 到 ci.log，失败时自动回传到 issue（见最后一步）
       - name: Unit tests
-        run: ./gradlew testDebugUnitTest --stacktrace
+        shell: bash
+        run: set -o pipefail; ./gradlew testDebugUnitTest --stacktrace 2>&1 | tee -a ci.log
 
       - name: Build debug
-        run: ./gradlew :app:assembleDebug --stacktrace
+        shell: bash
+        run: set -o pipefail; ./gradlew :app:assembleDebug --stacktrace 2>&1 | tee -a ci.log
 
       - uses: actions/upload-artifact@v4
         with:
@@ -52,12 +56,15 @@ jobs:
 
       - name: Build signed release
         if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
         run: |
+          set -o pipefail
           ./gradlew :app:assembleRelease --stacktrace \
             -Pandroid.injected.signing.store.file="$RUNNER_TEMP/release.jks" \
             -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
             -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
-            -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
+            -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}" \
+            2>&1 | tee -a ci.log
 
       - name: Upload release to GitHub Releases
         if: startsWith(github.ref, 'refs/tags/v')
@@ -65,3 +72,39 @@ jobs:
         with:
           files: app/build/outputs/apk/release/*.apk
           generate_release_notes: true
+
+      # 失败时把日志尾巴贴进 issue，便于在无 token 环境排查
+      - name: Report failure to issue
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let log = '';
+            try { log = fs.readFileSync('ci.log', 'utf8'); } catch (e) { log = '(ci.log 未生成)'; }
+            const tail = log.trimEnd().split('\n').slice(-120).join('\n').slice(-60000);
+            const TITLE = 'CI 失败日志（自动汇总）';
+            const { owner, repo } = context.repo;
+            const open = await github.rest.issues.listForRepo({ owner, repo, state: 'open', per_page: 100 });
+            let found = open.data.find(i => i.title === TITLE);
+            if (!found) {
+              const created = await github.rest.issues.create({
+                owner, repo, title: TITLE,
+                body: '此 issue 由 CI 自动写入，用于汇总失败日志。请勿关闭。'
+              });
+              found = created.data;
+            }
+            const body = [
+              `### ❌ \`${context.workflow}\` 失败`,
+              `- run: [${context.runId}](https://github.com/${owner}/${repo}/actions/runs/${context.runId}) (#${context.runNumber})`,
+              `- ref: \`${context.ref}\``,
+              `- sha: \`${context.sha.slice(0, 7)}\``,
+              '',
+              '<details><summary>最后 120 行</summary>',
+              '',
+              '```',
+              tail,
+              '```',
+              '</details>'
+            ].join('\n');
+            await github.rest.issues.createComment({ owner, repo, issue_number: found.number, body });

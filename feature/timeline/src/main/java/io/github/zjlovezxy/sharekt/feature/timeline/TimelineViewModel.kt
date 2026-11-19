@@ -3,6 +3,7 @@ package io.github.zjlovezxy.sharekt.feature.timeline
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import io.github.zjlovezxy.sharekt.core.common.AppLog
 import io.github.zjlovezxy.sharekt.core.data.WeiboRepository
 import io.github.zjlovezxy.sharekt.core.model.Status
 import io.github.zjlovezxy.sharekt.core.network.MapiException
@@ -59,6 +60,7 @@ class TimelineViewModel(private val repository: WeiboRepository) : ViewModel() {
                     page = if (firstPage) 1 else current.page + 1,
                 )
             }.onSuccess { page ->
+                AppLog.d("TimelineVm", "加载成功 items=${page.items.size} next=${page.maxId}")
                 maxId = page.maxId
                 val merged = if (firstPage) page.items else current.items + page.items
                 _state.value = _state.value.copy(
@@ -71,6 +73,7 @@ class TimelineViewModel(private val repository: WeiboRepository) : ViewModel() {
                     error = "",
                 )
             }.onFailure { throwable ->
+                AppLog.w("TimelineVm", "加载失败 ${throwable.javaClass.name}: ${throwable.message}")
                 _state.value = _state.value.copy(
                     refreshing = false,
                     loadingMore = false,

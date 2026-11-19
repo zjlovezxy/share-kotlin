@@ -83,6 +83,7 @@ class WeiboRepository(
         return try {
             val page = fetch()
             if (cacheFirst) encodePage(key, page)
+            AppLog.d(TAG, "网络成功 key=$key items=${page.items.size} next=${page.maxId}")
             page
         } catch (e: MapiException) {
             val stale = if (cacheFirst) decodePage(key, Long.MAX_VALUE) else null

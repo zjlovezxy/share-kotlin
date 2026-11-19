@@ -1,5 +1,6 @@
 package io.github.zjlovezxy.sharekt.core.network
 
+import io.github.zjlovezxy.sharekt.core.common.AppLog
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.HttpUrl
@@ -22,7 +23,9 @@ class WeiboCookieJar(private val storage: CookieStorage) : CookieJar {
 
     override fun loadForRequest(url: HttpUrl): List<Cookie> = synchronized(lock) {
         val now = System.currentTimeMillis()
-        cache.values.filter { it.matches(url) && it.expiresAt > now }
+        val hit = cache.values.filter { it.matches(url) && it.expiresAt > now }
+        AppLog.d("CookieJar", "load ${url.host} cache=${cache.size} hit=${hit.size}")
+        hit
     }
 
     override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {

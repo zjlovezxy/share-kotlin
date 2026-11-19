@@ -60,6 +60,7 @@ class TimelineFragment : Fragment() {
             }
         }
 
+        binding.hint.setOnClickListener { viewModel.refresh() }
         viewModel.firstLoad()
     }
 

@@ -62,17 +62,23 @@ class MapiClient(
     }
 
     private suspend fun execute(req: Request): JsonObject = withContext(Dispatchers.IO) {
+        val started = System.currentTimeMillis()
         AppLog.d(TAG, "GET ${req.url}")
         val text = try {
             http.newCall(req).execute().use { r ->
                 val body = r.body?.string().orEmpty()
+                AppLog.d(TAG, "resp ${r.code} ${body.length}B ${System.currentTimeMillis() - started}ms")
                 if (!r.isSuccessful) throw MapiException(r.code, "HTTP ${r.code} ${r.message}")
                 body
             }
         } catch (e: MapiException) {
+            AppLog.w(TAG, "resp 异常 ${e.code} ${e.message} ${System.currentTimeMillis() - started}ms")
             throw e
         } catch (e: IOException) {
-            AppLog.w(TAG, "网络失败 ${req.url}: ${e.javaClass.simpleName}: ${e.message}")
+            AppLog.w(
+                TAG,
+                "网络失败 ${req.url}: ${e.javaClass.simpleName}: ${e.message} after ${System.currentTimeMillis() - started}ms",
+            )
             throw MapiException(MapiException.CODE_NETWORK, "网络错误：${e.message}", e)
         }
         val element = runCatching { json.parseToJsonElement(text) }.getOrElse {
@@ -97,6 +103,7 @@ class MapiClient(
 
         fun defaultClient(): OkHttpClient = OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
+            .callTimeout(30, TimeUnit.SECONDS)
             .readTimeout(20, TimeUnit.SECONDS)
             .writeTimeout(20, TimeUnit.SECONDS)
             .retryOnConnectionFailure(true)

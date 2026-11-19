@@ -38,6 +38,12 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      # 固定 debug 签名证书：保证每次构建的 debug APK 签名一致（可覆盖安装、不丢登录态）
+      - name: Prepare stable debug keystore
+        run: |
+          base64 -d ci/sharekt-debug.p12.b64 > "$RUNNER_TEMP/sharekt-debug.p12"
+          echo "SHAREKT_DEBUG_KEYSTORE=$RUNNER_TEMP/sharekt-debug.p12" >> "$GITHUB_ENV"
+
       - uses: gradle/actions/setup-gradle@v4
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}

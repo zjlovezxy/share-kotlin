@@ -135,13 +135,17 @@ class WeiboApi(private val client: MapiClient) {
         val okPrim = this["ok"] as? JsonPrimitive
         if (okPrim != null) {
             val okValue = okPrim.booleanOrNull?.let { if (it) 1 else 0 } ?: okPrim.intOrNull ?: 1
-            if (okValue == 0) {
-                val code = int("code").let { if (it != 0) it else -1 }
-                val msg = str("msg").ifEmpty { str("message") }
-                AppLog.w(TAG, "ok=0 code=$code msg=$msg")
-                throw MapiException(code, msg.ifEmpty { "请求被拒绝（ok=0）" })
-            }
-            return
+            if (okValue > 0) return
+            // ok=-100 是未登录（body 里带 sso 跳转 url），其它负数/0 是接口错误
+            val code = int("code").let { if (it != 0) it else okValue }
+            val msg = str("msg").ifEmpty { str("message") }
+            AppLog.w(TAG, "ok=$okValue code=$code msg=$msg")
+            throw MapiException(
+                code,
+                msg.ifEmpty {
+                    if (okValue == -100) "需要登录" else "请求被拒绝（ok=$okValue）"
+                },
+            )
         }
         val errno = int("errno")
         if (errno != 0) {

@@ -68,6 +68,7 @@ class MapiClient(
             http.newCall(req).execute().use { r ->
                 val body = r.body?.string().orEmpty()
                 AppLog.d(TAG, "resp ${r.code} ${body.length}B ${System.currentTimeMillis() - started}ms")
+                if (body.length < 600) AppLog.d(TAG, "body ${body}")
                 if (!r.isSuccessful) throw MapiException(r.code, "HTTP ${r.code} ${r.message}")
                 body
             }

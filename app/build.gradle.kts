@@ -13,12 +13,28 @@ android {
         applicationId = "io.github.zjlovezxy.sharekt"
         minSdk = 26
         targetSdk = 36
-        versionCode = 3
-        versionName = "0.1.3"
+        versionCode = 4
+        versionName = "0.1.4"
     }
 
     buildFeatures {
         viewBinding = true
+    }
+
+    signingConfigs {
+        // debug 包用仓库里带来的固定证书（ci/sharekt-debug.p12.b64，CI 里解码到临时文件），
+        // 否则每次 CI 生成的 debug keystore 都不一样，adb install -r 会报签名不匹配，
+        // 而且一卸载登录态就没了。
+        getByName("debug") {
+            val path = System.getenv("SHAREKT_DEBUG_KEYSTORE")
+            if (!path.isNullOrBlank() && file(path).exists()) {
+                storeFile = file(path)
+                storePassword = "sharekt"
+                keyAlias = "sharekt"
+                keyPassword = "sharekt"
+                storeType = "PKCS12"
+            }
+        }
     }
 
     buildTypes {

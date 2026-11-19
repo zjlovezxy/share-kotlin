@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      调试用：让 LoginActivity 可以被 adb 直接拉起并注入 cookie，
+      省掉在真机上手输账号密码。release 版不导出（见 core:auth 的清单）。
+    -->
+    <application>
+        <activity
+            android:name="io.github.zjlovezxy.sharekt.core.auth.LoginActivity"
+            android:exported="true"
+            tools:replace="android:exported" />
+    </application>
+</manifest>

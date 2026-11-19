@@ -56,6 +56,7 @@ class MapiClient(
         } catch (e: MapiException) {
             throw e
         } catch (e: IOException) {
+            AppLog.w(TAG, "网络失败 ${req.url}: ${e.javaClass.simpleName}: ${e.message}")
             throw MapiException(MapiException.CODE_NETWORK, "网络错误：${e.message}", e)
         }
         val element = runCatching { json.parseToJsonElement(text) }.getOrElse {

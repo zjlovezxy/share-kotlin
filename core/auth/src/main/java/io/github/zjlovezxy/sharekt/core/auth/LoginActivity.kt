@@ -62,6 +62,16 @@ class LoginActivity : AppCompatActivity() {
 
         title = getString(R.string.sharekt_login_title)
 
+        // 调试/自动化入口：am start ... --es cookie "SUB=xxx; SUBP=yyy" 直接注入登录态，
+        // 不用在设备上手动输入账号密码（云真机验证省事，也不泄露密码）。
+        val injected = intent?.getStringExtra(EXTRA_COOKIE)
+        if (!injected.isNullOrBlank()) {
+            handled = true
+            progress.visibility = View.VISIBLE
+            login(injected)
+            return
+        }
+
         webView.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
@@ -98,17 +108,12 @@ class LoginActivity : AppCompatActivity() {
         webView.loadUrl(ApiConfig.LOGIN_URL)
     }
 
-    private fun tryFinish(url: String) {
-        if (handled) return
-        val cookie = CookieManager.getInstance().getCookie(url) ?: return
-        if (!cookie.contains("${ApiConfig.COOKIE_SUB}=")) return
-        handled = true
+    private fun login(cookie: String) {
         val repository = authRepository ?: run {
             setResult(RESULT_CANCELED)
             finish()
             return
         }
-        progress.visibility = View.VISIBLE
         lifecycleScope.launch {
             runCatching { repository.loginWithCookie(cookie) }
                 .onSuccess { session ->
@@ -126,6 +131,15 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
+    private fun tryFinish(url: String) {
+        if (handled) return
+        val cookie = CookieManager.getInstance().getCookie(url) ?: return
+        if (!cookie.contains("${ApiConfig.COOKIE_SUB}=")) return
+        handled = true
+        progress.visibility = View.VISIBLE
+        login(cookie)
+    }
+
     override fun onDestroy() {
         if (::webView.isInitialized) {
             webView.stopLoading()
@@ -136,10 +150,15 @@ class LoginActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "LoginActivity"
+        const val EXTRA_COOKIE = "cookie"
         private const val LOGIN_USER_AGENT =
             "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 " +
                 "(KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36"
 
         fun intent(context: Context): Intent = Intent(context, LoginActivity::class.java)
+
+        /** 调试用：直接带着 cookie 打开登录页。 */
+        fun intent(context: Context, cookie: String): Intent =
+            intent(context).putExtra(EXTRA_COOKIE, cookie)
     }
 }

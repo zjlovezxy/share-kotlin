@@ -130,14 +130,29 @@ class WeiboApi(private val client: MapiClient) {
     }
 
     /** ok=0 才当错误；某些成功响应根本不带 ok，别误伤。 */
+    /**
+     * mapi 有两种错误形态：
+     * 1) {ok:0, code:..., msg:...}  常规接口错误
+     * 2) {errno:-100, errmsg:"您的身份已失效，请重新登录"}  未登录 / 风控
+     * 两种都要转成 MapiException，否则未登录会被渲染成空列表。
+     */
     private fun JsonObject.ensureOk() {
-        val raw = this["ok"] as? JsonPrimitive ?: return
-        val okValue = raw.booleanOrNull?.let { if (it) 1 else 0 } ?: raw.intOrNull ?: 1
-        if (okValue == 0) {
-            val code = int("code").let { if (it != 0) it else -1 }
-            val msg = str("msg").ifEmpty { str("message") }
-            AppLog.w("WeiboApi", "ok=0 code=$code msg=$msg")
-            throw MapiException(code, msg.ifEmpty { "请求被拒绝（ok=0）" })
+        val okPrim = this["ok"] as? JsonPrimitive
+        if (okPrim != null) {
+            val okValue = okPrim.booleanOrNull?.let { if (it) 1 else 0 } ?: okPrim.intOrNull ?: 1
+            if (okValue == 0) {
+                val code = int("code").let { if (it != 0) it else -1 }
+                val msg = str("msg").ifEmpty { str("message") }
+                AppLog.w("WeiboApi", "ok=0 code=$code msg=$msg")
+                throw MapiException(code, msg.ifEmpty { "请求被拒绝（ok=0）" })
+            }
+            return
+        }
+        val errno = int("errno")
+        if (errno != 0) {
+            val msg = str("errmsg").ifEmpty { str("msg") }
+            AppLog.w("WeiboApi", "errno=$errno msg=$msg")
+            throw MapiException(errno, msg.ifEmpty { "请求失败（$errno）" })
         }
     }
 

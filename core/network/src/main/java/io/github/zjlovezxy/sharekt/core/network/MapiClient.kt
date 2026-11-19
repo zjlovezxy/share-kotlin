@@ -45,6 +45,22 @@ class MapiClient(
         return execute(req)
     }
 
+    /** 通用 GET：完整 URL + 指定 header + query，h5（m.weibo.cn）走这里，cookie 由 jar 自动带。 */
+    suspend fun getUrl(
+        url: String,
+        headers: Map<String, String> = emptyMap(),
+        params: Map<String, String> = emptyMap(),
+    ): JsonObject {
+        val builder = url.toHttpUrl().newBuilder()
+        params.forEach { (k, v) -> if (v.isNotEmpty()) builder.addQueryParameter(k, v) }
+        val req = Request.Builder()
+            .url(builder.build())
+            .header("User-Agent", userAgent)
+            .apply { headers.forEach { (k, v) -> header(k, v) } }
+            .build()
+        return execute(req)
+    }
+
     private suspend fun execute(req: Request): JsonObject = withContext(Dispatchers.IO) {
         AppLog.d(TAG, "GET ${req.url}")
         val text = try {

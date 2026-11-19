@@ -16,7 +16,8 @@ import kotlinx.coroutines.launch
 data class DetailUiState(
     val status: Status? = null,
     val comments: List<Comment> = emptyList(),
-    val commentsPage: Int = 0,
+    /** 评论游标（h5 的 max_id），0 表示还没有下一页。 */
+    val commentsMaxId: Long = 0L,
     val endReached: Boolean = false,
     val refreshing: Boolean = false,
     val error: String = "",
@@ -38,7 +39,7 @@ class DetailViewModel(
         _state.value = _state.value.copy(refreshing = fresh, error = "")
         viewModelScope.launch {
             val statusJob = async { runCatching { repository.status(statusId, fresh) } }
-            val commentsJob = async { runCatching { repository.comments(statusId, page = 1) } }
+            val commentsJob = async { runCatching { repository.comments(statusId) } }
 
             val statusResult = statusJob.await()
             val commentsResult = commentsJob.await()
@@ -47,11 +48,12 @@ class DetailViewModel(
                 ?: commentsResult.exceptionOrNull()?.userMessage()
                 ?: ""
 
+            val page = commentsResult.getOrNull()
             _state.value = _state.value.copy(
                 status = statusResult.getOrNull() ?: _state.value.status,
-                comments = commentsResult.getOrNull()?.items ?: _state.value.comments,
-                commentsPage = if (commentsResult.getOrNull() != null) 1 else _state.value.commentsPage,
-                endReached = commentsResult.getOrNull()?.maxId.isNullOrEmpty(),
+                comments = page?.items ?: _state.value.comments,
+                commentsMaxId = page?.maxId?.toLongOrNull() ?: _state.value.commentsMaxId,
+                endReached = page != null && page.maxId.isEmpty(),
                 refreshing = false,
                 error = error,
             )
@@ -61,14 +63,14 @@ class DetailViewModel(
 
     fun loadMoreComments() {
         val current = _state.value
-        if (busy || current.endReached || current.comments.isEmpty()) return
+        if (busy || current.endReached || current.comments.isEmpty() || current.commentsMaxId <= 0L) return
         busy = true
         viewModelScope.launch {
-            runCatching { repository.comments(statusId, page = current.commentsPage + 1) }
+            runCatching { repository.comments(statusId, maxId = current.commentsMaxId) }
                 .onSuccess { page ->
                     _state.value = _state.value.copy(
-                        comments = current.comments + page.items,
-                        commentsPage = current.commentsPage + 1,
+                        comments = (current.comments + page.items).distinctBy { it.id },
+                        commentsMaxId = page.maxId.toLongOrNull() ?: 0L,
                         endReached = page.maxId.isEmpty(),
                     )
                 }

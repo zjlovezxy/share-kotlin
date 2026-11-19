@@ -49,8 +49,8 @@ class WeiboRepository(
         return status
     }
 
-    suspend fun comments(statusId: String, page: Int = 1): Page<Comment> =
-        api.comments(statusId, page = page)
+    suspend fun comments(statusId: String, maxId: Long = 0L): Page<Comment> =
+        api.comments(statusId, maxId = maxId)
 
     suspend fun user(uid: String, fresh: Boolean = false): WeiboUser? {
         val key = "${KEY_USER_INFO}_$uid"
